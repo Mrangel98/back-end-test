@@ -15,6 +15,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 class VehiculoServicioTest {
@@ -94,4 +95,41 @@ class VehiculoServicioTest {
 
         assertEquals(HttpStatus.BAD_REQUEST, ex.getStatus());
     }
+@Test
+    void transferirPropietario_conPermisoValido_deberiaActualizarPropietario() {
+
+    // GIVEN
+    UUID vehiculoId = UUID.randomUUID();
+    UUID propietarioActualId = UUID.randomUUID();
+    UUID nuevoPropietarioId = UUID.randomUUID();
+
+    Vehiculo vehiculo = new Vehiculo();
+    vehiculo.setId(vehiculoId);
+    vehiculo.setPropietarioId(propietarioActualId);
+    vehiculo.setTipo(TipoVehiculo.coche);
+
+    Usuario nuevoPropietario = new Usuario();
+    nuevoPropietario.setId(nuevoPropietarioId);
+    nuevoPropietario.setTipoPermiso(TipoPermiso.B);
+    nuevoPropietario.setPermisoValidoHasta(LocalDate.now().plusYears(1));
+
+    when(vehiculoRepository.findById(vehiculoId))
+            .thenReturn(Optional.of(vehiculo));
+
+    when(usuarioRepository.findById(nuevoPropietarioId))
+            .thenReturn(Optional.of(nuevoPropietario));
+
+    when(vehiculoRepository.update(any(Vehiculo.class)))
+            .thenAnswer(invocation -> invocation.getArgument(0));
+
+    // WHEN
+    Vehiculo resultado = vehiculoServicio.transferirPropietario(
+            vehiculoId,
+            nuevoPropietarioId
+    );
+
+    // THEN
+    assertEquals(nuevoPropietarioId, resultado.getPropietarioId());
+}
+
 }
